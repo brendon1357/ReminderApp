@@ -11,6 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Properties;
 
 public class Main extends JFrame {
@@ -22,6 +23,7 @@ public class Main extends JFrame {
     private final JLabel headerLabel, typeReminderLabel, selectDateLabel, selectTimeLabel;
     private final JTextField timeField;
     private final JButton addButton, viewButton;
+    private final JComboBox<String> timeCB;
     private int currentDisplayIndex;
 
     public Main() {
@@ -41,6 +43,18 @@ public class Main extends JFrame {
         p.put("text.today", "Today");
         p.put("text.month", "Month");
         p.put("text.year", "Year");
+        
+        String[] timeSelections = {"AM", "PM"};
+        timeCB = new JComboBox<String>(timeSelections);
+        
+        JLabel timeSelectLabel = new JLabel("AM/PM");
+        timeSelectLabel.setFont(smallFont);
+        
+        JPanel timeCBPanel = new JPanel();
+        timeCBPanel.setLayout(new BoxLayout(timeCBPanel, BoxLayout.PAGE_AXIS));
+        timeSelectLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        timeCBPanel.add(timeSelectLabel);
+        timeCBPanel.add(timeCB);
 
         //Creating a new date panel and a new date picker
         JDatePanelImpl date_panel = new JDatePanelImpl(model, p);
@@ -64,7 +78,7 @@ public class Main extends JFrame {
         headerPanel.add(headerLabel);
 
         //Creating a scrollable text area
-        text_area = new JTextArea(15, 40);
+        text_area = new JTextArea(15, 45);
         text_area_scroll = new JScrollPane(text_area);
         text_area_scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         text_area.setLineWrap(true);
@@ -98,11 +112,15 @@ public class Main extends JFrame {
         dateInputPanel.add(Box.createVerticalGlue());
         selectDateLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        selectTimeLabel = new JLabel("Input Time (e.g. 8:00 AM)");
+        selectTimeLabel = new JLabel("Input Time (e.g. 8:00)");
         selectTimeLabel.setFont(smallFont);
 
         timeField = new JTextField();
+        timeField.setPreferredSize(new Dimension(100, 27));
         timeField.setFont(regFont);
+        
+        JPanel containerForTimeInput = new JPanel();
+        containerForTimeInput.setLayout(new BoxLayout(containerForTimeInput, BoxLayout.X_AXIS));
 
         timeInputPanel = new JPanel();
         timeInputPanel.setLayout(new BoxLayout(timeInputPanel, BoxLayout.PAGE_AXIS));
@@ -111,11 +129,14 @@ public class Main extends JFrame {
         timeInputPanel.add(timeField);
         timeInputPanel.add(Box.createVerticalGlue());
         selectTimeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        containerForTimeInput.add(timeInputPanel);
+        containerForTimeInput.add(Box.createHorizontalStrut(5));
+        containerForTimeInput.add(timeCBPanel);
 
         fieldPanel = new JPanel();
-        fieldPanel.setLayout(new GridLayout(1, 3));
-        fieldPanel.add(timeInputPanel);
-        fieldPanel.add(Box.createRigidArea(new Dimension()));
+        fieldPanel.setLayout(new GridLayout(1, 2, 100, 0));
+        fieldPanel.add(containerForTimeInput);
         fieldPanel.add(dateInputPanel);
 
         addButton = new JButton("Add Reminder");
@@ -229,6 +250,12 @@ public class Main extends JFrame {
     public String getTextFromField(){
         return timeField.getText();
     }
+    
+    public String getSelection() {
+    	String selection = (String) timeCB.getSelectedItem();
+    	
+    	return selection;
+    }
 
     public String getTextFromArea(){
         return text_area.getText();
@@ -262,25 +289,24 @@ public class Main extends JFrame {
     //Also creates a Reminders.txt file in the directory and adds the reminder message plus time to the file
     public void addReminder() throws IOException {
         String date = datePicker.getJFormattedTextField().getText();
-        String time = getTextFromField().toUpperCase();
+        String time = getTextFromField();
+        String selection = getSelection();
 
-        String date_and_time = (date + " " + time);
+        String date_and_time = (date + " " + time + " " + selection);
         String text_from_area = getTextFromArea().toUpperCase();
         String homeDirectory = System.getProperty("user.home");
+        
+        String formatCheck = time.replaceAll(":", "");
 
         if (!Files.isDirectory(Paths.get(homeDirectory + "/RemindersData"))){
             Files.createDirectories(Paths.get(homeDirectory + "/RemindersData"));
         }
 
-        if (text_from_area.equals("") || date_and_time.equals(" ")){
+        if (text_from_area.equals("") || date_and_time.equals(" ") || (text_from_area.trim().isEmpty() || date_and_time.trim().isEmpty())){
             JOptionPane.showMessageDialog(null, "Missing reminder time or reminder message.",
                     "Error: " + "Missing field", JOptionPane.ERROR_MESSAGE);
         }
-        else if (date_and_time.length() < 18 || date_and_time.length() > 19){
-            JOptionPane.showMessageDialog(null, "Check format for reminder time.",
-                    "Error: " + "Improper format", JOptionPane.ERROR_MESSAGE);
-        }
-        else if (time.contains(":") && (time.contains("AM") || time.contains("PM"))){
+        else if (time.contains(":") && formatCheck.matches("[0-9]+")){
             FileWriter writer;
             File file = new File(homeDirectory + "/RemindersData/Reminders.txt");
 
@@ -290,14 +316,14 @@ public class Main extends JFrame {
             else{
                 writer = new FileWriter(file, true);
             }
-            writer.write("(" + getTextFromArea() + ")" + " " + "[" + formatReminderTime(date_and_time) + "]");
+            writer.write("(" + getTextFromArea().trim() + ")" + " " + "[" + formatReminderTime(date_and_time) + "]");
             writer.write("\n");
             writer.close();
             JOptionPane.showMessageDialog(null, "Reminder successfully added.",
                     "InfoBox: " + "Reminder added", JOptionPane.INFORMATION_MESSAGE);
         }
         else{
-            JOptionPane.showMessageDialog(null, "Must include AM or PM and a semicolon.",
+            JOptionPane.showMessageDialog(null, "Invalid time input. Please check input.",
                     "Error: " + "Missing AM/PM", JOptionPane.ERROR_MESSAGE);
         }
     }
