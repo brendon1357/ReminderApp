@@ -15,11 +15,13 @@ public class ReminderWindow extends JFrame {
     private final JList<String> list;
     private final JPanel listPanel, buttonPanel, mainPanel, bottomContainerPanel, backButtonPanel, topFlowPanel;
     private final JScrollPane scrollPane;
+    private final String homeDirectory;
 
     public ReminderWindow() throws IOException {
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
         Font font = new Font("Helvetica", Font.BOLD, 14);
         Font big_font = new Font("Helvetica", Font.BOLD, 28);
+        homeDirectory = System.getProperty("user.home");
 
         backButton = new BasicArrowButton(BasicArrowButton.WEST){
             @Override
@@ -95,8 +97,8 @@ public class ReminderWindow extends JFrame {
         setVisible(true);
     }
 
-    public static DefaultListModel<String> listedReminders() throws IOException {
-        FileInputStream fstream = new FileInputStream("C:/RemindersData/Reminders.txt");
+    public DefaultListModel<String> listedReminders() throws IOException {
+        FileInputStream fstream = new FileInputStream(homeDirectory + "/RemindersData/Reminders.txt");
         BufferedReader buffered_reader = new BufferedReader(new InputStreamReader(fstream));
         DefaultListModel<String> reminders = new DefaultListModel<>();
         String line;
@@ -140,9 +142,9 @@ public class ReminderWindow extends JFrame {
         }
     }
 
-    public static void removeLineFromFile(String line_to_remove) throws IOException {
-        File inputFile = new File("C:/RemindersData/Reminders.txt");
-        File tempFile = new File("C:/RemindersData/TempFile.txt");
+    public void removeLineFromFile(String line_to_remove) throws IOException {
+        File inputFile = new File(homeDirectory + "/RemindersData/Reminders.txt");
+        File tempFile = new File(homeDirectory + "/RemindersData/TempFile.txt");
 
         BufferedReader reader = new BufferedReader(new FileReader(inputFile));
         BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
@@ -157,7 +159,7 @@ public class ReminderWindow extends JFrame {
         writer.close();
         reader.close();
 
-        Path source = Paths.get("C:/RemindersData/TempFile.txt");
+        Path source = Paths.get(homeDirectory + "/RemindersData/TempFile.txt");
         Files.move(source, source.resolveSibling("Reminders.txt"), StandardCopyOption.REPLACE_EXISTING);
 
         JOptionPane.showMessageDialog(null, "Reminder Successfully deleted.",

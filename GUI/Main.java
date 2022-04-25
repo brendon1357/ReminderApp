@@ -266,9 +266,10 @@ public class Main extends JFrame {
 
         String date_and_time = (date + " " + time);
         String text_from_area = getTextFromArea().toUpperCase();
+        String homeDirectory = System.getProperty("user.home");
 
-        if (!Files.isDirectory(Paths.get("C:/RemindersData"))){
-            Files.createDirectories(Paths.get("C:/RemindersData"));
+        if (!Files.isDirectory(Paths.get(homeDirectory + "/RemindersData"))){
+            Files.createDirectories(Paths.get(homeDirectory + "/RemindersData"));
         }
 
         if (text_from_area.equals("") || date_and_time.equals(" ")){
@@ -281,7 +282,7 @@ public class Main extends JFrame {
         }
         else if (time.contains(":") && (time.contains("AM") || time.contains("PM"))){
             FileWriter writer;
-            File file = new File("C:/RemindersData/Reminders.txt");
+            File file = new File(homeDirectory + "/RemindersData/Reminders.txt");
 
             if (file.createNewFile()){
                 writer = new FileWriter(file);
